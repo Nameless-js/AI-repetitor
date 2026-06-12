@@ -33,19 +33,17 @@ export default function ChatView() {
   const [inp, setInp] = useState('');
   const [typing, setTyping] = useState(false);
   const [simps, setSimps] = useState(new Set());
+  const [loadingSimp, setLoadingSimp] = useState(null);
   const endRef = useRef(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, typing]);
 
   const onSimp = async (id) => {
     const m = msgs.find(x => x.id === id);
-    if (simps.has(id)) return;
-    setTyping(true);
-    
-    // Use existing simpler text if it's hardcoded (demo message), otherwise call Gemini
+    if (simps.has(id) || loadingSimp === id) return;
+    setLoadingSimp(id);
     const simplerText = m.simpler ? m.simpler : await explainSimpler(m.text);
-    
-    setTyping(false);
+    setLoadingSimp(null);
     setSimps(s => new Set([...s, id]));
     setMsgs(p => {
       const i = p.findIndex(x => x.id === id);
@@ -110,11 +108,15 @@ export default function ChatView() {
                     )}
                     <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
                   </div>
-                  {!m.isSimp && m.simpler && !simps.has(m.id) && (
+                  {!m.isSimp && !simps.has(m.id) && (
                     <button
                       onClick={() => onSimp(m.id)}
-                      style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem', fontWeight: 600, padding: '6px 12px', borderRadius: 8, background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid rgba(249,115,22,0.2)', cursor: 'pointer' }}>
-                      <Lightbulb size={12} /> 💡 Объясни проще (на пальцах)
+                      disabled={loadingSimp === m.id}
+                      style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.7rem', fontWeight: 600, padding: '6px 12px', borderRadius: 8, background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid rgba(249,115,22,0.2)', cursor: loadingSimp === m.id ? 'not-allowed' : 'pointer', opacity: loadingSimp === m.id ? 0.6 : 1 }}>
+                      {loadingSimp === m.id
+                        ? <><span className="dot" /><span className="dot" /><span className="dot" /></>
+                        : <><Lightbulb size={12} /> 💡 Объясни проще (на пальцах)</>
+                      }
                     </button>
                   )}
                 </div>
