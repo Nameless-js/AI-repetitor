@@ -156,7 +156,7 @@ async function sendPrompt(prompt, genConfig = {}) {
     { role: 'system', content: SYSTEM_TEXT },
     { role: 'user', content: prompt },
   ];
-  return grokRequest(messages);
+  return groqRequest(messages);
 }
 
 /**
