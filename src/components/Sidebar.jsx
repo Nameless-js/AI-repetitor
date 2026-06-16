@@ -1,7 +1,8 @@
-import { Home, MessageCircle, Layers, Brain, Calendar, GraduationCap, LogOut, X, FileText, CheckSquare } from 'lucide-react';
+import { Home, MessageCircle, Layers, Brain, Calendar, GraduationCap, LogOut, X, FileText, CheckSquare, Compass } from 'lucide-react';
 
 const NAV_STUDENT = [
   { id: 'home',       label: 'Главная',    Icon: Home },
+  { id: 'explore',    label: 'Хаб конспектов', Icon: Compass },
   { id: 'chat',       label: 'ИИ-чат',     Icon: MessageCircle },
   { id: 'flashcards', label: 'Карточки',   Icon: Layers },
   { id: 'quizzes',    label: 'Тесты',      Icon: Brain },

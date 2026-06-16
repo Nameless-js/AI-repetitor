@@ -27,16 +27,39 @@ async function generateCardsFromAI(content, isFile = false) {
 
   const prompt =
     `${context}\n\n` +
-    `Сгенерируй 8 учебных карточек для запоминания (флэш-карты).\n` +
-    `Ответь СТРОГО в формате JSON-массива без markdown, без \`\`\`, без пояснений. Только чистый JSON:\n` +
-    `[{"front":"термин или вопрос (кратко, до 10 слов)","back":"определение или ответ (2-4 предложения, понятно)"}]`;
+    `Сгенерируй 8 учебных карточек (флэш-карты) по этому материалу.\n` +
+    `Ответь СТРОГО в формате JSON-объекта, содержащего ключ "cards" с массивом карточек.\n` +
+    `Формат:\n` +
+    `{"cards": [{"front":"термин или вопрос (кратко, до 10 слов)","back":"определение или ответ (2-4 предложения, понятно)"}]}`;
 
   const { text } = await tryGenerateContent(prompt);
-  const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
-  const match = clean.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error('ИИ вернул неверный формат. Попробуйте ещё раз.');
-  const parsed = JSON.parse(match[0]);
-  return parsed.map((c, i) => ({ id: `gen_${Date.now()}_${i}`, front_text: c.front, back_text: c.back }));
+  
+  let parsed;
+  try {
+    const clean = text.replace(/```(json)?/gi, '').trim();
+    const objMatch = clean.match(/\{[\s\S]*\}/);
+    
+    if (!objMatch) {
+      throw new Error('В ответе нет JSON-объекта (возможно, текст слишком длинный или ИИ отказался отвечать)');
+    }
+
+    const obj = JSON.parse(objMatch[0]);
+    parsed = obj.cards || obj.flashcards || Object.values(obj).find(v => Array.isArray(v));
+    
+    if (!Array.isArray(parsed)) {
+      throw new Error('JSON найден, но внутри нет массива карточек');
+    }
+  } catch (err) {
+    console.error('AI raw text:', text, err);
+    const shortText = text.length > 100 ? text.slice(0, 100) + '...' : text;
+    throw new Error(`ИИ вернул неверный формат. Ошибка: ${err.message}. Ответ ИИ: ${shortText}`);
+  }
+
+  return parsed.map((c, i) => ({ 
+    id: `gen_${Date.now()}_${i}`, 
+    front_text: c.front || c.question || c.term || 'Без термина', 
+    back_text: c.back || c.answer || c.definition || 'Без определения' 
+  }));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -393,11 +416,31 @@ export default function FlashcardsView() {
   // Rate current card and advance
   const handleRate = (rating) => {
     const cardId = cards[idx]?.id;
-    setRatings(r => ({ ...r, [cardId]: rating }));
+    const newRatings = { ...ratings, [cardId]: rating };
+    setRatings(newRatings);
+    
     if (idx < cards.length - 1) {
       setIdx(i => i + 1);
     } else {
       setDone(true);
+      
+      // Обновляем прогресс колоды по итогам сессии
+      const easyCount = Object.values(newRatings).filter(r => r === 'easy').length;
+      const newMastered = Math.max(activeDeck.mastered || 0, easyCount);
+
+      if (activeDeck.generated) {
+        setGenDecks(decks => decks.map(d => 
+          d.id === activeDeck.id ? { ...d, mastered: newMastered } : d
+        ));
+      } else {
+        setDbDecks(decks => decks.map(d => 
+          d.id === activeDeck.id ? { ...d, mastered: newMastered } : d
+        ));
+        if (supabase) {
+          supabase.from('flashcard_decks').update({ mastered: newMastered }).eq('id', activeDeck.id).catch(console.error);
+        }
+      }
+      setActiveDeck(prev => ({ ...prev, mastered: newMastered }));
     }
   };
 

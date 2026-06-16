@@ -8,10 +8,12 @@ import ChatView from './components/ChatView';
 import FlashcardsView from './components/FlashcardsView';
 import QuizzesView from './components/QuizzesView';
 import ScheduleView from './components/ScheduleView';
+import ExploreHub from './components/ExploreHub';
 import { TeacherDashboard, TeacherMaterials, TeacherGrading, TeacherSchedule } from './components/TeacherPortal';
 
 const TITLES_STUDENT = {
   home:       'Главная',
+  explore:    'Хаб конспектов',
   chat:       'ИИ-чат',
   flashcards: 'Карточки',
   quizzes:    'Тесты',
@@ -98,6 +100,7 @@ export default function App() {
     } else {
       switch (tab) {
         case 'home':       return <Dashboard user={user} onTab={setTab} />;
+        case 'explore':    return <ExploreHub />;
         case 'chat':       return <ChatView />;
         case 'flashcards': return <FlashcardsView />;
         case 'quizzes':    return <QuizzesView />;

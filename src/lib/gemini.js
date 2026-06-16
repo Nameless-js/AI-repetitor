@@ -68,27 +68,30 @@ async function geminiRequest(model, contents, systemInstruction, generationConfi
  * Запрос к Groq Cloud через OpenAI-совместимый API.
  * Перебирает модели по списку GROQ_MODELS.
  */
-async function groqRequest(messages) {
+async function groqRequest(messages, genConfig = {}) {
   if (!GROQ_KEY || GROQ_KEY.startsWith('ВАШ_')) {
     throw new Error('Ключ Groq не задан. Получите бесплатный ключ на console.groq.com и добавьте в VITE_GROQ_API_KEY');
   }
 
   let lastError = null;
+  const isJson = genConfig.responseMimeType === 'application/json';
 
   for (const model of GROQ_MODELS) {
     try {
+      const body = {
+        model,
+        messages,
+        temperature: genConfig.temperature || 0.7,
+        max_tokens: genConfig.maxOutputTokens || 2000,
+      };
+
       const res = await fetch(GROQ_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${GROQ_KEY}`,
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
+        body: JSON.stringify(body),
       });
 
       const rawText = await res.text();
@@ -156,7 +159,7 @@ async function sendPrompt(prompt, genConfig = {}) {
     { role: 'system', content: SYSTEM_TEXT },
     { role: 'user', content: prompt },
   ];
-  return groqRequest(messages);
+  return groqRequest(messages, genConfig);
 }
 
 /**
@@ -209,9 +212,9 @@ async function sendChat(history, message) {
 // Публичное API (те же имена функций — остальной код менять не нужно)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function tryGenerateContent(prompt) {
+export async function tryGenerateContent(prompt, genConfig = {}) {
   if (!GEMINI_KEY && !GROQ_KEY) throw new Error('Ни один AI-ключ не задан в .env');
-  const text = await sendPrompt(prompt);
+  const text = await sendPrompt(prompt, genConfig);
   return { text };
 }
 
@@ -241,17 +244,34 @@ export async function explainSimpler(textToExplain) {
 export async function generateQuiz(subject, topic, count = 5) {
   const prompt =
     `Сгенерируй тест из ${count} вопросов по предмету "${subject}", тема: "${topic}".\n` +
-    `Ответь СТРОГО в формате JSON-массива без markdown, без \`\`\`, без пояснений. Только чистый JSON:\n` +
-    `[{"question":"текст вопроса","options":["вариант1","вариант2","вариант3","вариант4"],"correctAnswer":"правильный вариант точно как в options"}]`;
+    `Ответь СТРОГО в формате JSON-объекта, содержащего ключ "quiz" с массивом вопросов.\n` +
+    `Формат:\n` +
+    `{"quiz": [{"question":"текст вопроса","options":["вариант1","вариант2","вариант3","вариант4"],"correctAnswer":"правильный вариант точно как в options"}]}`;
 
   const { text } = await tryGenerateContent(prompt);
 
-  const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
-  const match = clean.match(/\[[\s\S]*\]/);
+  let parsed;
+  try {
+    const clean = text.replace(/```(json)?/gi, '').trim();
+    const objMatch = clean.match(/\{[\s\S]*\}/);
 
-  if (!match) throw new Error('ИИ вернул неверный формат теста. Попробуйте сгенерировать снова.');
+    if (!objMatch) {
+      throw new Error('В ответе нет JSON-объекта');
+    }
 
-  return JSON.parse(match[0]);
+    const obj = JSON.parse(objMatch[0]);
+    parsed = obj.quiz || obj.questions || Object.values(obj).find(v => Array.isArray(v));
+    
+    if (!Array.isArray(parsed)) {
+      throw new Error('JSON найден, но внутри нет массива');
+    }
+  } catch (err) {
+    console.error('AI raw text:', text, err);
+    const shortText = text.length > 100 ? text.slice(0, 100) + '...' : text;
+    throw new Error(`ИИ вернул неверный формат теста. Ошибка: ${err.message}. Ответ ИИ: ${shortText}`);
+  }
+
+  return parsed;
 }
 
 export async function analyzeMistake(question, userAnswer, correctAnswer) {
