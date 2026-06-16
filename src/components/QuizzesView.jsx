@@ -123,8 +123,16 @@ function TakeQuiz({ questions, subject, topic, onBack, onSaveHistory }) {
         setCurrent(current + 1);
         setSelected(null);
       } else {
-        // Вызываем сохранение истории в localStorage главного компонента
         onSaveHistory(subject, topic, questions, newAnswers);
+        
+        const ok = newAnswers.filter(a => a.isCorrect).length;
+        const p = Math.round((ok / newAnswers.length) * 100);
+        if (p >= 80) {
+           window.dispatchEvent(new CustomEvent('xp_gained', { detail: { amount: 100 } }));
+        } else if (p >= 60) {
+           window.dispatchEvent(new CustomEvent('xp_gained', { detail: { amount: 50 } }));
+        }
+        
         setDone(true);
       }
     }, 800);

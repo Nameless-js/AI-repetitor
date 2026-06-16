@@ -15,9 +15,28 @@ export default function Header({ user, onMenu, onSwitchRole }) {
       .then(({ data }) => {
         if (data) setStats({ xp: data.xp || 0, xpMax: 3000, streak: data.streak || 1 });
       });
+
+    const handleXpGained = (e) => {
+      setStats(prev => {
+        const newXp = prev.xp + e.detail.amount;
+        let newXpMax = prev.xpMax;
+        while (newXp >= newXpMax) newXpMax += 3000;
+        return { ...prev, xp: newXp, xpMax: newXpMax };
+      });
+    };
+    window.addEventListener('xp_gained', handleXpGained);
+    return () => window.removeEventListener('xp_gained', handleXpGained);
   }, [user?.id]);
 
   const { xp, xpMax, streak } = stats;
+
+  const getDaysWord = (n) => {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'день';
+    if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'дня';
+    return 'дней';
+  };
 
   return (
     <header style={{
@@ -52,8 +71,8 @@ export default function Header({ user, onMenu, onSwitchRole }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 8, background: 'var(--gold-dim)', border: '1px solid rgba(234,179,8,0.2)' }}>
-          <span role="img" aria-label="огонь">🔥</span>
-          <span className="streak-num" style={{ fontSize: '0.75rem', fontWeight: 700 }}>{streak} дней</span>
+          <span role="img" aria-label="огонь" style={{ fontSize: '14px', lineHeight: 1 }}>🔥</span>
+          <span className="streak-num" style={{ fontSize: '0.75rem', fontWeight: 700 }}>{streak} {getDaysWord(streak)}</span>
         </div>
 
         <button style={{ position: 'relative', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>

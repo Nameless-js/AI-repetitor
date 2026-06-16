@@ -104,7 +104,10 @@ function DailyQuestWidget({ onTab }) {
             <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(e => !e)}>
               {expanded ? 'Скрыть шаги' : 'Показать шаги'}
             </button>
-            <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => setDone(true)}>
+            <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => {
+              setDone(true);
+              window.dispatchEvent(new CustomEvent('xp_gained', { detail: { amount: 50 } }));
+            }}>
               Отметить выполненным ✓
             </button>
           </div>
