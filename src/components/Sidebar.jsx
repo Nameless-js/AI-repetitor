@@ -1,4 +1,4 @@
-import { Home, MessageCircle, Layers, Brain, Calendar, GraduationCap, LogOut, X, FileText, CheckSquare, Compass } from 'lucide-react';
+import { Home, MessageCircle, Layers, Brain, Calendar, GraduationCap, LogOut, X, Compass, BookOpen, Zap } from 'lucide-react';
 
 const NAV_STUDENT = [
   { id: 'home',       label: 'Главная',    Icon: Home },
@@ -10,10 +10,11 @@ const NAV_STUDENT = [
 ];
 
 const NAV_TEACHER = [
-  { id: 'home',       label: 'Дашборд',    Icon: Home },
-  { id: 'materials',  label: 'Материалы',  Icon: FileText },
-  { id: 'grading',    label: 'Проверка',   Icon: CheckSquare },
-  { id: 'schedule',   label: 'Расписание', Icon: Calendar },
+  { id: 'home',        label: 'Главная',             Icon: Home },
+  { id: 'lesson-prep', label: 'Подготовка к уроку',  Icon: BookOpen },
+  { id: 'chat',        label: 'ИИ-чат',              Icon: MessageCircle },
+  { id: 'quizzes',     label: 'Тесты',               Icon: Brain },
+  { id: 'schedule',    label: 'Расписание',           Icon: Calendar },
 ];
 
 export default function Sidebar({ active, onChange, user, onLogout, open, onClose, isTeacher }) {
@@ -52,7 +53,7 @@ export default function Sidebar({ active, onChange, user, onLogout, open, onClos
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name}</div>
               <div style={{ fontSize: '0.68rem', color: 'var(--accent)', textTransform: 'capitalize' }}>
-                {isTeacher ? 'преподаватель' : 'студент'}
+                {isTeacher ? 'репетитор' : 'студент'}
               </div>
             </div>
           </div>

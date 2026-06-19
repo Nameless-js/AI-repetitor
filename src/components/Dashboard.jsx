@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Target, BookOpen, Zap, ArrowRight, Star, TrendingUp, Clock, Sparkles, RefreshCw, Send, X } from 'lucide-react';
+import { Target, BookOpen, Zap, ArrowRight, Star, TrendingUp, Clock, Sparkles, RefreshCw, Send, X, Bell, Radio } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { tryGenerateContent } from '../lib/gemini';
 
@@ -234,6 +234,72 @@ function LessonPrepWidget({ onTab }) {
   );
 }
 
+/* ── Виджет "Материал от репетитора" ── */
+function TeacherBroadcastWidget() {
+  const [broadcast, setBroadcast] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) { setLoading(false); return; }
+    // Check if user dismissed today
+    const key = 'eduai_broadcast_dismissed';
+    const stored = localStorage.getItem(key);
+
+    supabase
+      .from('lesson_broadcasts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const item = data[0];
+          // Dismiss only if same broadcast was dismissed
+          if (stored === item.id) {
+            setDismissed(true);
+          }
+          setBroadcast(item);
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  const dismiss = () => {
+    if (broadcast?.id) {
+      localStorage.setItem('eduai_broadcast_dismissed', broadcast.id);
+    }
+    setDismissed(true);
+  };
+
+  if (loading || !broadcast || dismissed) return null;
+
+  return (
+    <div className="card" style={{ padding: 20, borderColor: 'rgba(124,111,255,0.3)', background: 'rgba(124,111,255,0.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--violet-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Radio size={16} color="var(--violet)" />
+          </div>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Материал от репетитора</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span className="chip chip-violet"><Bell size={11} style={{ marginRight: 3 }} />Новое</span>
+          <button onClick={dismiss} title="Скрыть"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex' }}>
+            <X size={14} />
+          </button>
+        </div>
+      </div>
+      <div style={{ fontSize: '0.7rem', color: 'var(--violet)', fontWeight: 600, marginBottom: 6 }}>
+        📡 {broadcast.subject}
+      </div>
+      <p style={{ fontSize: '0.78rem', lineHeight: 1.7, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>
+        {broadcast.content}
+      </p>
+    </div>
+  );
+}
+
 /* ── Главный Dashboard ── */
 export default function Dashboard({ user, onTab }) {
   const [profile, setProfile] = useState(null);
@@ -274,6 +340,7 @@ export default function Dashboard({ user, onTab }) {
 
       {/* ── Виджеты ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+        <TeacherBroadcastWidget />
         <DailyQuestWidget onTab={onTab} />
         <LessonPrepWidget onTab={onTab} />
       </div>

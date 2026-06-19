@@ -9,7 +9,7 @@ import FlashcardsView from './components/FlashcardsView';
 import QuizzesView from './components/QuizzesView';
 import ScheduleView from './components/ScheduleView';
 import ExploreHub from './components/ExploreHub';
-import { TeacherDashboard, TeacherMaterials, TeacherGrading, TeacherSchedule } from './components/TeacherPortal';
+import { TeacherDashboard, TeacherMaterials, TeacherGrading, TeacherSchedule, TeacherLessonPrepView, TeacherQuizzesView, TeacherScheduleView } from './components/TeacherPortal';
 
 const TITLES_STUDENT = {
   home:       'Главная',
@@ -21,10 +21,13 @@ const TITLES_STUDENT = {
 };
 
 const TITLES_TEACHER = {
-  home:       'Дашборд Преподавателя',
-  materials:  'Учебные материалы',
-  grading:    'Проверка работ',
-  schedule:   'Расписание занятий',
+  home:         'Панель Репетитора',
+  'lesson-prep':'Подготовка к уроку',
+  chat:         'ИИ-чат',
+  quizzes:      'Тесты для студентов',
+  schedule:     'Расписание занятий',
+  materials:    'Учебные материалы',
+  grading:      'Проверка работ',
 };
 
 export default function App() {
@@ -91,11 +94,14 @@ export default function App() {
   const Content = () => {
     if (isTeacher) {
       switch (tab) {
-        case 'home':       return <TeacherDashboard />;
-        case 'materials':  return <TeacherMaterials />;
-        case 'grading':    return <TeacherGrading />;
-        case 'schedule':   return <TeacherSchedule />;
-        default:           return <TeacherDashboard />;
+        case 'home':         return <TeacherDashboard />;
+        case 'lesson-prep':  return <TeacherLessonPrepView />;
+        case 'chat':         return <ChatView />;
+        case 'quizzes':      return <TeacherQuizzesView />;
+        case 'schedule':     return <TeacherScheduleView />;
+        case 'materials':    return <TeacherMaterials />;
+        case 'grading':      return <TeacherGrading />;
+        default:             return <TeacherDashboard />;
       }
     } else {
       switch (tab) {

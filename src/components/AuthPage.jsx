@@ -136,7 +136,7 @@ export default function AuthPage({ onLogin }) {
                 <GraduationCap size={13} /> Студент
               </button>
               <button className={`role-btn ${role === 'teacher' ? 'active' : ''}`} onClick={() => setRole('teacher')}>
-                <Users size={13} /> Преподаватель
+                <Users size={13} /> Репетитор
               </button>
             </div>
           </div>

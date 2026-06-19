@@ -375,7 +375,7 @@ export default function QuizzesView() {
       ) : quizzes.length === 0 ? (
         <div className="card" style={{ padding: 32, textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📝</div>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Тестов от преподавателя пока нет</div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>Тестов от репетитора пока нет</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginBottom: 16 }}>Но ты можешь сам создать тест с помощью ИИ!</div>
           <button className="btn btn-primary" onClick={() => setView('my')}><Sparkles size={14} /> Мои тесты</button>
         </div>
